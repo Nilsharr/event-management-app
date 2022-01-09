@@ -33,10 +33,6 @@ const EventsList = () => {
         dispatch(getEvents({ searchByName: searchName }));
     };
 
-    const showRoute = () => {
-        console.log("...")
-    }
-
     const removeEvent = () => {
         dispatch(deleteEvent(currentEvent._id))
             .then(() => {
