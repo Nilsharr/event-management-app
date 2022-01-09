@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { updateEvent } from "../actions/events";
-import EventService from "../services/event-service";
 
 import Form from "react-validation/build/form";
 import Input from "react-validation/build/input";
 import TextArea from "react-validation/build/textarea";
 import CheckButton from "react-validation/build/button";
+import DateTimePicker from 'react-datetime-picker';
+import { Modal, Button } from "react-bootstrap";
+
+import { updateEvent } from "../actions/events";
+import EventService from "../services/event-service";
+import Map from "./Map/Map"
 
 const required = (value) => {
     if (!value) {
@@ -18,6 +22,8 @@ const required = (value) => {
     }
 };
 
+const minimumDate = new Date(new Date().setDate(new Date().getDate() + 2));
+
 const Event = (props) => {
     const form = useRef();
     const checkBtn = useRef();
@@ -28,15 +34,16 @@ const Event = (props) => {
         country: "",
         city: "",
         street: "",
-        date: "",
+        date: minimumDate,
         maxParticipants: "",
-        route: ""
+        route: null
     };
 
     const [currentEvent, setCurrentEvent] = useState(initialEventState);
     const [updateSuccessMessage, setUpdateSuccessMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const { message } = useSelector(state => state.message);
+    const [showMapModal, setShowMapModal] = useState(false);
 
     const dispatch = useDispatch();
 
@@ -55,7 +62,7 @@ const Event = (props) => {
                     country: response.data.address.country,
                     city: response.data.address.city,
                     street: response.data.address.street,
-                    date: new Date(response.data.date).toJSON().slice(0, 10),
+                    date: new Date(response.data.date),
                     maxParticipants: response.data.maxParticipants,
                     route: response.data.route
                 });
@@ -83,26 +90,13 @@ const Event = (props) => {
                     address: { country: currentEvent.country, city: currentEvent.city, street: currentEvent.street },
                     date: currentEvent.date,
                     maxParticipants: currentEvent.maxParticipants,
-                    //route: currentEvent.route
-                    route: [{
-                        "timestamp": 123,
-                        "coords": {
-                            "latitude": 1,
-                            "longtitude": 2,
-                            "altitudde": 3,
-                            "accuracy": 4,
-                            "heading": 5,
-                            "speed": 6
-                        }
-                    }]
+                    route: currentEvent.route
                 }
             };
             dispatch(updateEvent(currentEvent._id, data))
                 .then(response => {
-                    console.log(response);
                     setLoading(false);
-                    setUpdateSuccessMessage("The tutorial was updated successfully!");
-
+                    setUpdateSuccessMessage("The event was updated successfully!");
                 })
                 .catch(e => {
                     console.log(e);
@@ -111,10 +105,6 @@ const Event = (props) => {
         } else {
             setLoading(false);
         }
-    }
-
-    const editRoute = () => {
-        console.log("...");
     }
 
     return (
@@ -184,14 +174,20 @@ const Event = (props) => {
 
                         <div className="form-group">
                             <label htmlFor="date">Date</label>
-                            <Input
-                                type="date"
-                                className="form-control"
+                            <DateTimePicker
                                 name="date"
-                                min={new Date().toJSON().slice(0, 10)}
+                                minDate={minimumDate}
+                                maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))}
+                                format="dd-MM-yyyy HH:mm"
+                                disableClock={true}
+                                dayPlaceholder="dd"
+                                monthPlaceholder="MM"
+                                yearPlaceholder="yyyy"
+                                minutePlaceholder="mm"
+                                hourPlaceholder="hh"
+                                required={true}
                                 value={currentEvent.date}
-                                onChange={handleInputChange}
-                                validations={[required]}
+                                onChange={value => handleInputChange({ target: { name: "date", value } })}
                             />
                             {(message && message.errorMessages && message.errorMessages.invalidDate) && (
                                 <div className="form-group">
@@ -224,11 +220,14 @@ const Event = (props) => {
                         </div>
 
                         <div className="form-group">
-                            <button className="btn btn-primary btn-block"
-                                type="button"
-                                onClick={editRoute}>
+                            <Button variant="primary" onClick={() => setShowMapModal(true)}>
                                 Edit route
-                            </button>
+                            </Button>
+
+                            <Modal show={showMapModal} centered={true} animation={false} size="xl" onHide={() => setShowMapModal(false)}>
+                                <Modal.Header closeButton><b>Edit Route</b></Modal.Header>
+                                <Map event={currentEvent} setEvent={setCurrentEvent} />
+                            </Modal>
                         </div>
 
                         <div className="form-group">

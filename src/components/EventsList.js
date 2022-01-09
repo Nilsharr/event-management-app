@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Modal, Button } from "react-bootstrap";
+
 import { getEvents, deleteEvent } from "../actions/events";
+import Map from "./Map/Map"
 
 const EventsList = () => {
     const [currentEvent, setCurrentEvent] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(-1);
     const [searchName, setSearchName] = useState("");
+    const [showMapModal, setShowMapModal] = useState(false);
 
     const events = useSelector(state => state.events);
     const dispatch = useDispatch();
@@ -111,6 +115,7 @@ const EventsList = () => {
                                 <strong>Date:</strong>
                             </label>{" "}
                             {new Date(currentEvent.date).toUTCString()}
+                            {/* {new Date(currentEvent.date).toLocaleString()} */}
 
                         </div>
                         <div>
@@ -126,12 +131,14 @@ const EventsList = () => {
                             {currentEvent.participants.length}
                         </div>
                         <div className="mt-3">
-                            <button
-                                className="btn btn-primary"
-                                type="button"
-                                onClick={showRoute}>
-                                View route
-                            </button>
+                            <Button variant="primary" onClick={() => setShowMapModal(true)}>
+                                Show route
+                            </Button>
+
+                            <Modal show={showMapModal} centered={true} animation={false} size="xl" onHide={() => setShowMapModal(false)}>
+                                <Modal.Header closeButton><b>Route</b></Modal.Header>
+                                <Map event={currentEvent} canSetRoute={false} />
+                            </Modal>
                         </div>
 
                         <div className="mt-3">

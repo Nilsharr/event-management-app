@@ -1,12 +1,17 @@
 import React, { useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Modal, Button } from "react-bootstrap";
 
 import Form from "react-validation/build/form";
 import Input from "react-validation/build/input";
 import TextArea from "react-validation/build/textarea";
 import CheckButton from "react-validation/build/button";
+import DateTimePicker from 'react-datetime-picker';
 
+import Map from "./Map/Map"
 import { createEvent } from "../actions/events";
+
+const minimumDate = new Date(new Date().setDate(new Date().getDate() + 2));
 
 const required = (value) => {
     if (!value) {
@@ -28,15 +33,16 @@ const AddEvent = () => {
         country: "",
         city: "",
         street: "",
-        date: "",
+        date: minimumDate,
         maxParticipants: "",
-        route: ""
+        route: null
     };
 
     const [event, setEvent] = useState(initialEventState);
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const { message } = useSelector(state => state.message);
+    const [showMapModal, setShowMapModal] = useState(false);
 
     const dispatch = useDispatch();
 
@@ -57,18 +63,7 @@ const AddEvent = () => {
                 address: { country: event.country, city: event.city, street: event.street },
                 date: event.date,
                 maxParticipants: event.maxParticipants,
-                //route: event.route
-                route: [{
-                    "timestamp": 123,
-                    "coords": {
-                        "latitude": 1,
-                        "longtitude": 2,
-                        "altitudde": 3,
-                        "accuracy": 4,
-                        "heading": 5,
-                        "speed": 6
-                    }
-                }]
+                route: event.route
             };
 
             dispatch(createEvent(data))
@@ -97,10 +92,6 @@ const AddEvent = () => {
     const newEvent = () => {
         setEvent(initialEventState);
         setSubmitted(false);
-    }
-
-    const addRoute = () => {
-        console.log("...");
     }
 
     return (
@@ -177,14 +168,20 @@ const AddEvent = () => {
 
                         <div className="form-group">
                             <label htmlFor="date">Date</label>
-                            <Input
-                                type="date"
-                                className="form-control"
+                            <DateTimePicker
                                 name="date"
-                                min={new Date().toJSON().slice(0, 10)}
+                                minDate={minimumDate}
+                                maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))}
+                                format="dd-MM-yyyy HH:mm"
+                                disableClock={true}
+                                dayPlaceholder="dd"
+                                monthPlaceholder="MM"
+                                yearPlaceholder="yyyy"
+                                minutePlaceholder="mm"
+                                hourPlaceholder="hh"
+                                required={true}
                                 value={event.date}
-                                onChange={handleInputChange}
-                                validations={[required]}
+                                onChange={value => handleInputChange({ target: { name: "date", value } })}
                             />
                             {(message && message.errorMessages && message.errorMessages.invalidDate) && (
                                 <div className="form-group">
@@ -217,11 +214,14 @@ const AddEvent = () => {
                         </div>
 
                         <div className="form-group">
-                            <button className="btn btn-primary btn-block"
-                                type="button"
-                                onClick={addRoute}>
+                            <Button variant="primary" onClick={() => setShowMapModal(true)}>
                                 Add route
-                            </button>
+                            </Button>
+
+                            <Modal show={showMapModal} centered={true} animation={false} size="xl" onHide={() => setShowMapModal(false)}>
+                                <Modal.Header closeButton><b>Add Route</b></Modal.Header>
+                                <Map event={event} setEvent={setEvent} />
+                            </Modal>
                         </div>
 
                         <div className="form-group mt-4">
@@ -244,9 +244,9 @@ const AddEvent = () => {
                         {/* clear button */}
                         <CheckButton style={{ display: "none" }} ref={checkBtn} />
                     </Form>
-                </div>
+                </div >
             )}
-        </div>
+        </div >
     );
 };
 
