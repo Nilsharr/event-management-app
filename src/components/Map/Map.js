@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./Map.css";
 import mapboxgl from "mapbox-gl";
@@ -81,11 +81,7 @@ const MapboxGLMap = ({ canSetRoute = true, event = null, setEvent = null }) => {
 
         if (event.route) {
             map.current.on('load', () => {
-                if (map.current.getSource("route")) {
-                    map.current.removeLayer("route");
-                    map.current.removeSource("route");
-                }
-                else {
+                if (!map.current.getSource("route")) {
                     drawNewRoute(routeCoords);
                 }
             });
